@@ -63,3 +63,7 @@ node --test tests/*.test.mjs
 ```
 
 已通过未知 VID/PID、多设备、协议选择、取消与拒绝授权、本地目录、HID 接口选择的 10 项测试。首页已进行浏览器验证。真实设备配置与完整功能页验证仍待资源补齐和实物设备测试。
+
+## 键盘 V2 宏探测（只读）
+
+`web/local/macro-probe.html` 是只读探测页，用于确认 V2 键盘的宏协议细节（状态位含义、模式值、偏移单位）。启动本地服务后打开 <http://127.0.0.1:8765/local/macro-probe.html>，选择键盘并读取宏空间、模式和数据。页面只会发送读取帧，发送前由 `isReadOnlyFrame` 白名单校验。协议编码在 `web/local/macro-protocol.mjs`，`tests/macro-protocol.test.mjs` 会与原站 `esm-BSNVEyo2.js` 中的编码器逐字节比对。组合序列编辑与写入尚未实现。
