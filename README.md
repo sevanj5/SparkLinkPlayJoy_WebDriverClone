@@ -67,3 +67,7 @@ node --test tests/*.test.mjs
 ## 键盘 V2 宏探测（只读）
 
 `web/local/macro-probe.html` 是只读探测页，用于确认 V2 键盘的宏协议细节（状态位含义、模式值、偏移单位）。启动本地服务后打开 <http://127.0.0.1:8765/local/macro-probe.html>，选择键盘并读取宏空间、模式和数据。页面只会发送读取帧，发送前由 `isReadOnlyFrame` 白名单校验。协议编码在 `web/local/macro-protocol.mjs`，`tests/macro-protocol.test.mjs` 会与原站 `esm-BSNVEyo2.js` 中的编码器逐字节比对。组合序列编辑与写入尚未实现。
+
+### 组合序列编辑器（试运行，不写入设备）
+
+`web/local/macro-editor.html` 把一串组合键（如 `ctrl+c 50`）转换为 V2 宏帧并显示将要写入的字节；页面没有任何设备访问代码，不会向键盘发送数据。已在 Carotmas Mer68 MAX 上通过只读探测确认：`status 1` 为按下、`0` 为抬起，键码为 USB HID 用途码，每帧 15 个动作。延迟单位、偏移单位和模式值尚未在设备上实测，页面会给出提示。

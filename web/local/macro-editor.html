@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>V2 combo sequence editor (dry run)</title>
+<style>
+  :root { color-scheme: light dark; --bg:#fafafa; --fg:#1d1d1f; --mut:#6b6b70; --card:#fff; --line:#d8d8de; --acc:#2563eb; --ok:#15803d; --bad:#b91c1c; --warn:#b45309; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#16161a; --fg:#ececf0; --mut:#9a9aa3; --card:#202026; --line:#34343c; --acc:#6ea0ff; --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; } }
+  body { margin:0; padding:24px; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui, sans-serif; }
+  main { max-width:880px; margin:0 auto; display:grid; gap:16px; }
+  h1 { font-size:20px; margin:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; }
+  .badge { display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid var(--warn); color:var(--warn); }
+  .row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:8px; }
+  label { color:var(--mut); }
+  textarea, input[type=number] { font:inherit; padding:6px 8px; border-radius:8px; border:1px solid var(--line); background:var(--bg); color:var(--fg); }
+  textarea { width:100%; box-sizing:border-box; min-height:110px; font-family:ui-monospace, Menlo, Consolas, monospace; }
+  input[type=number] { width:76px; }
+  table { border-collapse:collapse; width:100%; font:13px ui-monospace, Menlo, Consolas, monospace; }
+  th, td { text-align:left; padding:3px 10px 3px 0; border-bottom:1px solid var(--line); }
+  pre { margin:0; padding:12px; border-radius:8px; background:var(--bg); border:1px solid var(--line); overflow:auto; font:12.5px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space:pre-wrap; word-break:break-all; }
+  .mut { color:var(--mut); } .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Combo sequence editor <span class="badge">dry run</span></h1>
+    <p class="mut">Builds the exact macro frames for a sequence of key combos and shows them. This page has no device access: nothing here is sent to the keyboard.</p>
+  </div>
+
+  <section class="card">
+    <strong>Sequence</strong>
+    <p class="mut" style="margin:4px 0">One combo per line: <code>combo [waitMs]</code>. Modifiers: ctrl, shift, alt, win. Example: <code>ctrl+shift+c 100</code>. Lines starting with # are ignored.</p>
+    <textarea id="steps" spellcheck="false">ctrl+c 50
+alt+tab 200
+ctrl+v</textarea>
+    <div class="row">
+      <label>macro slot <input type="number" id="slot" min="0" max="255" value="3"></label>
+      <label>ms per delay tick <input type="number" id="tick" min="1" max="1000" value="10"></label>
+      <label>key hold ms <input type="number" id="hold" min="1" max="5000" value="20"></label>
+      <label>gap ms <input type="number" id="gap" min="1" max="5000" value="10"></label>
+      <label>offset counts <select id="unit"><option value="action">actions</option><option value="byte">bytes</option></select></label>
+    </div>
+    <p class="mut" style="margin:8px 0 0">Your keyboard's slots 0–2 already hold macros (seen in the read-only probe); a spare slot such as 3 is the safe choice.</p>
+  </section>
+
+  <section class="card">
+    <strong>Result</strong>
+    <p id="status" class="mut">…</p>
+    <div id="warnings"></div>
+    <table id="actions"></table>
+  </section>
+
+  <section class="card">
+    <strong>Frames that would be written, in order</strong>
+    <pre id="frames" class="mut">…</pre>
+  </section>
+</main>
+<script type="module" src="./macro-editor.mjs"></script>
+</body>
+</html>
