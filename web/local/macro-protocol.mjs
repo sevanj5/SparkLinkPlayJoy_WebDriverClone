@@ -101,5 +101,15 @@ export function isReadOnlyFrame(frame) {
   return false;
 }
 
+/**
+ * A reply whose first byte echoes the request group but whose second byte is 0xFF.
+ * Upstream treats 0xFF in this position as "not supported" (e.g. displayer hasDisplay: e[1] !== 255).
+ * Observed on a Carotmas Mer68 MAX in answer to the macro-space query.
+ */
+export function isUnsupportedReply(frame, reply) {
+  const tx = asBytes(frame), rx = asBytes(reply);
+  return rx[0] === tx[0] && rx[1] === 0xff;
+}
+
 export const hex = (data, max = REPORT_SIZE) =>
   Array.from(asBytes(data).subarray(0, max), x => x.toString(16).padStart(2, "0")).join(" ");

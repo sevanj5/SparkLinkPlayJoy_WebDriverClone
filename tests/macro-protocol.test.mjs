@@ -54,3 +54,12 @@ test("read-only guard rejects every write command", () => {
   assert.ok(!m.isReadOnlyFrame(sneaky));
   assert.ok(!m.isReadOnlyFrame(new Uint8Array(64).fill(0)));
 });
+test("0xFF second byte is recognised as an unsupported reply", () => {
+  const tx = m.buildSpaceInfoQuery();
+  const rx = new Uint8Array(64); rx.set([2, 0xff]);
+  assert.ok(m.isUnsupportedReply(tx, rx));
+  const ok = new Uint8Array(64); ok.set([2, 14, 0, 16]);
+  assert.ok(!m.isUnsupportedReply(tx, ok));
+  const otherGroup = new Uint8Array(64); otherGroup.set([9, 0xff]);
+  assert.ok(!m.isUnsupportedReply(tx, otherGroup));
+});

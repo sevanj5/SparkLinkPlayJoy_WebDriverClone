@@ -1,6 +1,6 @@
 import {
   buildSpaceInfoQuery, buildReadMacroMode, buildReadMacro, parseSpaceInfo, parseMacroMode,
-  parseMacroData, isReadOnlyFrame, asBytes, hex, REPORT_SIZE,
+  parseMacroData, isReadOnlyFrame, isUnsupportedReply, asBytes, hex,
 } from "./macro-protocol.mjs";
 
 const $ = id => document.getElementById(id);
@@ -75,6 +75,10 @@ async function run(label, frame, parse) {
     const reply = await query(frame);
     if (!reply) { log("  no response within 1.5 s", "bad"); return null; }
     log(`  rx (reportId ${reply.reportId}, ${reply.bytes.length} bytes) ${hex(reply.bytes)}`, "mut");
+    if (isUnsupportedReply(frame, reply.bytes)) {
+      log("  firmware answered 0xFF: this command is not supported by the device", "bad");
+      return { parsed: null, unsupported: true, bytes: reply.bytes };
+    }
     const echoed = reply.bytes[0] === frame[0] && reply.bytes[1] === frame[1];
     log(`  header echo ${echoed ? "matches" : "DIFFERS"} (tx ${hex(frame, 2)} / rx ${hex(reply.bytes, 2)})`, echoed ? "ok" : "bad");
     const parsed = parse(reply.bytes);
@@ -95,15 +99,24 @@ $("space").addEventListener("click", () => run("macro space info", buildSpaceInf
 $("mode").addEventListener("click", () => run(`macro mode, id ${macroId()}`, buildReadMacroMode(macroId()), parseMacroMode));
 $("data").addEventListener("click", () => run(`macro data, id ${macroId()} offset ${offset()}`, buildReadMacro(macroId(), offset()), parseMacroData));
 
+const SCAN_IDS = 16; // upstream mouse bundle lists macro keys M0-M15; used when the device can't report a count
+
 $("all").addEventListener("click", async () => {
   const info = await run("macro space info", buildSpaceInfoQuery(), parseSpaceInfo);
-  const count = info?.parsed.macroCount;
-  if (!count) return log("Cannot read all: macro count unknown or zero.", "bad");
+  let count = info?.parsed?.macroCount;
+  if (!count) {
+    log(`Macro count unavailable (${info?.unsupported ? "query unsupported" : "no answer"}); scanning IDs 0-${SCAN_IDS - 1} directly.`, "mut");
+    count = SCAN_IDS;
+  }
+  let supported = 0;
   for (let id = 0; id < count; id++) {
     const mode = await run(`macro mode, id ${id}`, buildReadMacroMode(id), parseMacroMode);
-    if (mode?.parsed.valid && mode.parsed.actNum > 0) await run(`macro data, id ${id} offset 0`, buildReadMacro(id, 0), parseMacroData);
+    if (mode?.unsupported) { log(`Mode read is unsupported too; stopping scan at id ${id}.`, "bad"); break; }
+    if (!mode) continue;
+    supported++;
+    if (mode.parsed.valid && mode.parsed.actNum > 0) await run(`macro data, id ${id} offset 0`, buildReadMacro(id, 0), parseMacroData);
   }
-  log("\nDone.", "ok");
+  log(`\nDone. ${supported} mode reads answered.`, "ok");
 });
 
 $("copy").addEventListener("click", async () => {
